@@ -63,14 +63,57 @@ found in the LICENSE file.
     <script src="js/third-party/wglu/wglu-stats.js"></script>
     <script src="js/third-party/wglu/wglu-texture.js"></script>
 
-    <script src="js/vr-cube-sea.js"></script>
-    <script src="js/vr-samples-util.js"></script>
+    <script src="js/vr/vr-cube-sea.js"></script>
+    <script src="js/vr/vr-cube-island.js"></script>
+    <script src="js/vr/vr-samples-util.js"></script>
+
+
+    <script src="js/third-party/numeric-1.2.6.js"></script>
+    <script src="js/third-party/math.js"></script>
+    <script src="js/third-party/d3.js"></script>
+
+
+    <script src="js/utils.js"></script>
+    <script src="js/GrandTour.js"></script>
+    <script src="js/vr-point-cloud.js"></script>
+
+
   </head>
   <body>
     <canvas id="webgl-canvas"></canvas>
     <script>
       /* global mat4, VRCubeSea, WGLUStats, WGLUTextureLoader, VRSamplesUtil */
       "use strict";
+      let softmax, labels, points, colors;
+      let epochIndex = 0;
+      let gt = new GrandTour(10);
+      utils.loadDataBin('data/softmax.bin', (buffer)=>{
+        softmax = utils.reshape(new Float32Array(buffer), [100,1000,10]);
+        points = softmax[epochIndex];
+        window.onkeypress = function(event){
+          let key = event.key;
+          if (key=='n'){
+            epochIndex += 1;
+            if(epochIndex >= 100){
+              epochIndex = 0;
+            }
+            points = softmax[epochIndex];
+          }else if (key=='p'){
+            epochIndex -= 1;
+            if(epochIndex <= -1){
+              epochIndex = 99;
+            }
+            points = softmax[epochIndex];
+          }
+        };
+      });
+
+      utils.loadDataBin('data/labels.bin', (buffer)=>{
+        labels = Array.from(new Uint8Array(buffer));
+        colors = labels.map(l=>utils.label2color[l]);
+      });
+
+
 
       var vrDisplay = null;
       var frameData = null;
@@ -84,14 +127,14 @@ found in the LICENSE file.
 
       // WebGL setup.
       var gl = null;
-      var cubeSea = null;
+      var pointCloud = null;
       var stats = null;
 
       function onContextLost( event ) {
         event.preventDefault();
         console.log( 'WebGL Context Lost.' );
         gl = null;
-        cubeSea = null;
+        pointCloud = null;
         stats = null;
       }
 
@@ -137,7 +180,7 @@ found in the LICENSE file.
 
         var textureLoader = new WGLUTextureLoader(gl);
         var texture = textureLoader.loadTexture("media/textures/cube-sea.png");
-        cubeSea = new VRCubeSea(gl, texture);
+        pointCloud = new VRPointCloud(gl, texture, 4, 0.5, false, false, false);
         var enablePerformanceMonitoring = WGLUUrl.getBool(
             'enablePerformanceMonitoring', false);
         stats = new WGLUStats(gl, enablePerformanceMonitoring);
@@ -248,8 +291,10 @@ found in the LICENSE file.
       }
 
       function onAnimationFrame (t) {
+
+        let points_3d = gt.project(points,0.1);
         // do not attempt to render if there is no available WebGL context
-        if (!gl || !stats || !cubeSea) {
+        if (!gl || !stats || !pointCloud) {
           return;
         }
 
@@ -264,16 +309,18 @@ found in the LICENSE file.
 
           if (vrDisplay.isPresenting) {
             gl.viewport(0, 0, webglCanvas.width * 0.5, webglCanvas.height);
-            cubeSea.render(frameData.leftProjectionMatrix, frameData.leftViewMatrix, stats, t);
+
+           
+            pointCloud.render(points_3d, colors, frameData.leftProjectionMatrix, frameData.leftViewMatrix, stats, t);
 
             gl.viewport(webglCanvas.width * 0.5, 0, webglCanvas.width * 0.5, webglCanvas.height);
-            cubeSea.render(frameData.rightProjectionMatrix, frameData.rightViewMatrix, stats, t);
+            pointCloud.render(points_3d, colors, frameData.rightProjectionMatrix, frameData.rightViewMatrix, stats, t);
 
             vrDisplay.submitFrame();
           } else {
             gl.viewport(0, 0, webglCanvas.width, webglCanvas.height);
             mat4.perspective(projectionMat, Math.PI*0.4, webglCanvas.width / webglCanvas.height, 0.1, 1024.0);
-            cubeSea.render(projectionMat, frameData.leftViewMatrix, stats, t);
+            pointCloud.render(points_3d, colors, projectionMat, frameData.leftViewMatrix, stats, t);
             stats.renderOrtho();
           }
         } else {
@@ -283,7 +330,7 @@ found in the LICENSE file.
           gl.viewport(0, 0, webglCanvas.width, webglCanvas.height);
           mat4.perspective(projectionMat, Math.PI*0.4, webglCanvas.width / webglCanvas.height, 0.1, 1024.0);
           mat4.identity(viewMat);
-          cubeSea.render(projectionMat, viewMat, stats, t);
+          pointCloud.render(projectionMat, viewMat, stats, t);
 
           stats.renderOrtho();
         }
