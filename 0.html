@@ -5,339 +5,342 @@ Use of this source code is governed by a BSD-style license that can be
 found in the LICENSE file.
 -->
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 
-    <!-- Origin Trial Token, feature = WebVR (For Chrome M62+), origin = https://webvr.info, expires = 2018-09-10 -->
+<!-- Origin Trial Token, feature = WebVR (For Chrome M62+), origin = https://webvr.info, expires = 2018-09-10 -->
 <meta http-equiv="origin-trial" data-feature="WebVR (For Chrome M62+)" data-expires="2018-09-10" content="AhQcOrbjvS0+50wwuqtAidzraKNfZj8Bj159g2+2LsT5QRHe9IeebCl5ApORwd3oGxfKzl5H8s5K3aTMNzC+5gsAAABPeyJvcmlnaW4iOiJodHRwczovL3dlYnZyLmluZm86NDQzIiwiZmVhdHVyZSI6IldlYlZSMS4xTTYyIiwiZXhwaXJ5IjoxNTM2NjAxNDEzfQ==">
 
 
-    <title>04 - Simple Mirroring</title>
+<title>04 - Simple Mirroring</title>
 
-    <!--
-      This sample demonstrates how to mirror content to an external display
-      while presenting to a VRDisplay.
-    -->
+<!--
+  This sample demonstrates how to mirror content to an external display
+  while presenting to a VRDisplay.
+-->
 
-    <style>
-      #webgl-canvas {
-        box-sizing: border-box;
-        height: 100%;
-        left: 0;
-        margin: 0;
-        position: absolute;
-        top: 0;
-        width: 100%;
-      }
-    </style>
+<style>
+  #webgl-canvas {
+    box-sizing: border-box;
+    height: 100%;
+    left: 0;
+    margin: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+  }
+</style>
 
-    <!-- This entire block in only to facilitate dynamically enabling and
-    disabling the WebVR polyfill, and is not necessary for most WebVR apps.
-    If you want to use the polyfill in your app, just include the js file and
-    everything will work the way you want it to by default. -->
-    <script src="js/third-party/webvr-polyfill.js"></script>
-    <script src="js/third-party/wglu/wglu-url.js"></script>
-    <script>
-      // Dynamically turn the polyfill on if requested by the query args.
-      if (WGLUUrl.getBool('polyfill', false)) {
-        var polyfill = new WebVRPolyfill({
-          // Ensures the polyfill is always active on mobile, due to providing
-          // a polyfilled CardboardVRDisplay when no native API is available,
-          // and also polyfilling even when the native API is available, due to
-          // providing a CardboardVRDisplay when no native VRDisplays exist.
-          PROVIDE_MOBILE_VRDISPLAY: true,
-          // Polyfill optimizations
-          DIRTY_SUBMIT_FRAME_BINDINGS: true,
-          BUFFER_SCALE: 0.75,
-        });
-      }
-    </script>
-    <!-- End sample polyfill enabling logic -->
+<!-- This entire block in only to facilitate dynamically enabling and
+disabling the WebVR polyfill, and is not necessary for most WebVR apps.
+If you want to use the polyfill in your app, just include the js file and
+everything will work the way you want it to by default. -->
+<script src="js/third-party/webvr-polyfill.js"></script>
+<script src="js/third-party/wglu/wglu-url.js"></script>
+<script>
+  // Dynamically turn the polyfill on if requested by the query args.
+  if (WGLUUrl.getBool('polyfill', false)) {
+    var polyfill = new WebVRPolyfill({
+      // Ensures the polyfill is always active on mobile, due to providing
+      // a polyfilled CardboardVRDisplay when no native API is available,
+      // and also polyfilling even when the native API is available, due to
+      // providing a CardboardVRDisplay when no native VRDisplays exist.
+      PROVIDE_MOBILE_VRDISPLAY: true,
+      // Polyfill optimizations
+      DIRTY_SUBMIT_FRAME_BINDINGS: true,
+      BUFFER_SCALE: 0.75,
+    });
+  }
+</script>
+<!-- End sample polyfill enabling logic -->
 
-    <script src="js/third-party/gl-matrix-min.js"></script>
+<script src="js/third-party/gl-matrix-min.js"></script>
 
-    <script src="js/third-party/wglu/wglu-program.js"></script>
-    <script src="js/third-party/wglu/wglu-stats.js"></script>
-    <script src="js/third-party/wglu/wglu-texture.js"></script>
+<script src="js/third-party/wglu/wglu-program.js"></script>
+<script src="js/third-party/wglu/wglu-stats.js"></script>
+<script src="js/third-party/wglu/wglu-texture.js"></script>
 
-    <script src="js/vr/vr-cube-sea.js"></script>
-    <script src="js/vr/vr-cube-island.js"></script>
-    <script src="js/vr/vr-samples-util.js"></script>
-
-
-    <script src="js/third-party/numeric-1.2.6.js"></script>
-    <script src="js/third-party/math.js"></script>
-    <script src="js/third-party/d3.js"></script>
+<script src="js/vr/vr-cube-sea.js"></script>
+<script src="js/vr/vr-cube-island.js"></script>
+<script src="js/vr/vr-samples-util.js"></script>
 
 
-    <script src="js/utils.js"></script>
-    <script src="js/GrandTour.js"></script>
-    <script src="js/vr-point-cloud.js"></script>
+<script src="js/third-party/numeric-1.2.6.js"></script>
+<script src="js/third-party/math.js"></script>
+<script src="js/third-party/d3.js"></script>
 
 
-  </head>
-  <body>
-    <canvas id="webgl-canvas"></canvas>
-    <script>
-      /* global mat4, VRCubeSea, WGLUStats, WGLUTextureLoader, VRSamplesUtil */
-      "use strict";
-      let softmax, labels, points, colors;
-      let epochIndex = 0;
-      let gt = new GrandTour(10);
-      utils.loadDataBin('data/softmax.bin', (buffer)=>{
-        softmax = utils.reshape(new Float32Array(buffer), [100,1000,10]);
-        points = softmax[epochIndex];
-        window.onkeypress = function(event){
-          let key = event.key;
-          if (key=='n'){
-            epochIndex += 1;
-            if(epochIndex >= 100){
-              epochIndex = 0;
-            }
-            points = softmax[epochIndex];
-          }else if (key=='p'){
-            epochIndex -= 1;
-            if(epochIndex <= -1){
-              epochIndex = 99;
-            }
-            points = softmax[epochIndex];
-          }
-        };
-      });
-
-      utils.loadDataBin('data/labels.bin', (buffer)=>{
-        labels = Array.from(new Uint8Array(buffer));
-        colors = labels.map(l=>utils.label2color[l]);
-      });
+<script src="js/utils.js"></script>
+<script src="js/GrandTour.js"></script>
+<script src="js/vr-point-cloud.js"></script>
 
 
+</head>
+<body>
+<canvas id="webgl-canvas"></canvas>
+<script>
+/* global mat4, VRCubeSea, WGLUStats, WGLUTextureLoader, VRSamplesUtil */
+"use strict";
+let softmax, labels, points, colors;
+let epochIndex = 0;
+let gt = new GrandTour(10);
+utils.loadDataBin('data/softmax.bin', (buffer)=>{
+  softmax = utils.reshape(new Float32Array(buffer), [100,1000,10]);
+  points = softmax[epochIndex];
+  
+});
 
-      var vrDisplay = null;
-      var frameData = null;
-      var projectionMat = mat4.create();
-      var viewMat = mat4.create();
-      var vrPresentButton = null;
+window.onkeypress = function(event){
+  let key = event.key;
+  if (key=='n'){
+    epochIndex += 1;
+    if(epochIndex >= 100){
+      epochIndex = 0;
+    }
+    points = softmax[epochIndex];
+  }else if (key=='p'){
+    epochIndex -= 1;
+    if(epochIndex <= -1){
+      epochIndex = 99;
+    }
+    points = softmax[epochIndex];
+  }
+};
 
-      // ================================
-      // WebVR-specific code begins here.
-      // ================================
+utils.loadDataBin('data/labels.bin', (buffer)=>{
+  labels = Array.from(new Uint8Array(buffer));
+  colors = labels.map(l=>utils.label2color[l]);
+});
 
-      // WebGL setup.
-      var gl = null;
-      var pointCloud = null;
-      var stats = null;
 
-      function onContextLost( event ) {
-        event.preventDefault();
-        console.log( 'WebGL Context Lost.' );
-        gl = null;
-        pointCloud = null;
-        stats = null;
-      }
 
-      function onContextRestored( event ) {
-        console.log( 'WebGL Context Restored.' );
-        initWebGL(vrDisplay ? vrDisplay.capabilities.hasExternalDisplay : false);
-      }
+var vrDisplay = null;
+var frameData = null;
+var projectionMat = mat4.create();
+var viewMat = mat4.create();
+var vrPresentButton = null;
 
-      var webglCanvas = document.getElementById("webgl-canvas");
-      webglCanvas.addEventListener( 'webglcontextlost', onContextLost, false );
-      webglCanvas.addEventListener( 'webglcontextrestored', onContextRestored, false );
+// ================================
+// WebVR-specific code begins here.
+// ================================
 
-      function initWebGL (preserveDrawingBuffer) {
-        // Setting preserveDrawingBuffer to true prevents the canvas from being
-        // implicitly cleared when calling submitFrame or compositing the canvas
-        // on the document. For the simplest form of mirroring we want to create
-        // the canvas with that option enabled. Note that this may incur a
-        // performance penalty, as it may imply that additional copies of the
-        // canvas backbuffer need to be made. As a result, we ONLY want to set
-        // that if we know the VRDisplay has an external display, which is why
-        // we defer WebGL initialization until after we've gotten results back
-        // from navigator.getVRDisplays and know which device we'll be
-        // presenting with.
-        var glAttribs = {
-          alpha: false,
-          preserveDrawingBuffer: preserveDrawingBuffer
-        };
-        var useWebgl2 = WGLUUrl.getBool('webgl2', false);
-        var contextTypes = useWebgl2 ? ["webgl2"] : ["webgl", "experimental-webgl"];
-        for (var i in contextTypes) {
-          gl = webglCanvas.getContext(contextTypes[i], glAttribs);
-          if (gl)
-            break;
-        }
-        if (!gl) {
-          var webglType = (useWebgl2 ? "WebGL 2" : "WebGL")
-          VRSamplesUtil.addError("Your browser does not support " + webglType + ".");
-          return;
-        }
-        gl.clearColor(0.1, 0.2, 0.3, 1.0);
-        gl.enable(gl.DEPTH_TEST);
-        gl.enable(gl.CULL_FACE);
+// WebGL setup.
+var gl = null;
+var pointCloud = null;
+var stats = null;
 
-        var textureLoader = new WGLUTextureLoader(gl);
-        var texture = textureLoader.loadTexture("media/textures/cube-sea.png");
-        pointCloud = new VRPointCloud(gl, texture, 4, 0.5, false, false, false);
-        var enablePerformanceMonitoring = WGLUUrl.getBool(
-            'enablePerformanceMonitoring', false);
-        stats = new WGLUStats(gl, enablePerformanceMonitoring);
+function onContextLost( event ) {
+  event.preventDefault();
+  console.log( 'WebGL Context Lost.' );
+  gl = null;
+  pointCloud = null;
+  stats = null;
+}
 
-        // Wait until we have a WebGL context to resize and start rendering.
-        window.addEventListener("resize", onResize, false);
-        onResize();
-        window.requestAnimationFrame(onAnimationFrame);
-      }
+function onContextRestored( event ) {
+  console.log( 'WebGL Context Restored.' );
+  initWebGL(vrDisplay ? vrDisplay.capabilities.hasExternalDisplay : false);
+}
 
-      function onVRRequestPresent () {
-        vrDisplay.requestPresent([{ source: webglCanvas }]).then(function () {
-        }, function (err) {
-          var errMsg = "requestPresent failed.";
-          if (err && err.message) {
-            errMsg += "<br/>" + err.message
-          }
-          VRSamplesUtil.addError(errMsg, 2000);
-        });
-      }
+var webglCanvas = document.getElementById("webgl-canvas");
+webglCanvas.addEventListener( 'webglcontextlost', onContextLost, false );
+webglCanvas.addEventListener( 'webglcontextrestored', onContextRestored, false );
 
-      function onVRExitPresent () {
-        if (!vrDisplay.isPresenting)
-          return;
+function initWebGL (preserveDrawingBuffer) {
+  // Setting preserveDrawingBuffer to true prevents the canvas from being
+  // implicitly cleared when calling submitFrame or compositing the canvas
+  // on the document. For the simplest form of mirroring we want to create
+  // the canvas with that option enabled. Note that this may incur a
+  // performance penalty, as it may imply that additional copies of the
+  // canvas backbuffer need to be made. As a result, we ONLY want to set
+  // that if we know the VRDisplay has an external display, which is why
+  // we defer WebGL initialization until after we've gotten results back
+  // from navigator.getVRDisplays and know which device we'll be
+  // presenting with.
+  var glAttribs = {
+    alpha: false,
+    preserveDrawingBuffer: preserveDrawingBuffer
+  };
+  var useWebgl2 = WGLUUrl.getBool('webgl2', false);
+  var contextTypes = useWebgl2 ? ["webgl2"] : ["webgl", "experimental-webgl"];
+  for (var i in contextTypes) {
+    gl = webglCanvas.getContext(contextTypes[i], glAttribs);
+    if (gl)
+      break;
+  }
+  if (!gl) {
+    var webglType = (useWebgl2 ? "WebGL 2" : "WebGL")
+    VRSamplesUtil.addError("Your browser does not support " + webglType + ".");
+    return;
+  }
+  gl.clearColor(0.1, 0.2, 0.3, 1.0);
+  gl.enable(gl.DEPTH_TEST);
+  gl.enable(gl.CULL_FACE);
 
-        vrDisplay.exitPresent().then(function () {
-        }, function () {
-          VRSamplesUtil.addError("exitPresent failed.", 2000);
-        });
-      }
+  var textureLoader = new WGLUTextureLoader(gl);
+  var texture = textureLoader.loadTexture("media/textures/cube-sea.png");
+  pointCloud = new VRPointCloud(gl, texture, 4, 0.5, false, false, false);
+  var enablePerformanceMonitoring = WGLUUrl.getBool(
+      'enablePerformanceMonitoring', false);
+  stats = new WGLUStats(gl, enablePerformanceMonitoring);
 
-      function onVRPresentChange () {
-        onResize();
+  // Wait until we have a WebGL context to resize and start rendering.
+  window.addEventListener("resize", onResize, false);
+  onResize();
+  window.requestAnimationFrame(onAnimationFrame);
+}
 
-        if (vrDisplay.isPresenting) {
-          if (vrDisplay.capabilities.hasExternalDisplay) {
-            VRSamplesUtil.removeButton(vrPresentButton);
-            vrPresentButton = VRSamplesUtil.addButton("Exit VR", "E", "media/icons/cardboard64.png", onVRExitPresent);
-          }
-        } else {
-          if (vrDisplay.capabilities.hasExternalDisplay) {
-            VRSamplesUtil.removeButton(vrPresentButton);
-            vrPresentButton = VRSamplesUtil.addButton("Enter VR", "E", "media/icons/cardboard64.png", onVRRequestPresent);
-          }
-        }
-      }
+function onVRRequestPresent () {
+  vrDisplay.requestPresent([{ source: webglCanvas }]).then(function () {
+  }, function (err) {
+    var errMsg = "requestPresent failed.";
+    if (err && err.message) {
+      errMsg += "<br/>" + err.message
+    }
+    VRSamplesUtil.addError(errMsg, 2000);
+  });
+}
 
-      if (navigator.getVRDisplays) {
-        frameData = new VRFrameData();
+function onVRExitPresent () {
+  if (!vrDisplay.isPresenting)
+    return;
 
-        navigator.getVRDisplays().then(function (displays) {
-          if (displays.length > 0) {
-            vrDisplay = displays[displays.length - 1];
-            vrDisplay.depthNear = 0.1;
-            vrDisplay.depthFar = 1024.0;
+  vrDisplay.exitPresent().then(function () {
+  }, function () {
+    VRSamplesUtil.addError("exitPresent failed.", 2000);
+  });
+}
 
-            if (vrDisplay.capabilities.canPresent)
-              vrPresentButton = VRSamplesUtil.addButton("Enter VR", "E", "media/icons/cardboard64.png", onVRRequestPresent);
+function onVRPresentChange () {
+  onResize();
 
-            // For the benefit of automated testing. Safe to ignore.
-            if (vrDisplay.capabilities.canPresent && WGLUUrl.getBool('canvasClickPresents', false))
-              webglCanvas.addEventListener("click", onVRRequestPresent, false);
+  if (vrDisplay.isPresenting) {
+    if (vrDisplay.capabilities.hasExternalDisplay) {
+      VRSamplesUtil.removeButton(vrPresentButton);
+      vrPresentButton = VRSamplesUtil.addButton("Exit VR", "E", "media/icons/cardboard64.png", onVRExitPresent);
+    }
+  } else {
+    if (vrDisplay.capabilities.hasExternalDisplay) {
+      VRSamplesUtil.removeButton(vrPresentButton);
+      vrPresentButton = VRSamplesUtil.addButton("Enter VR", "E", "media/icons/cardboard64.png", onVRRequestPresent);
+    }
+  }
+}
 
-            window.addEventListener('vrdisplaypresentchange', onVRPresentChange, false);
-            window.addEventListener('vrdisplayactivate', onVRRequestPresent, false);
-            window.addEventListener('vrdisplaydeactivate', onVRExitPresent, false);
+if (navigator.getVRDisplays) {
+  frameData = new VRFrameData();
 
-            // Only use preserveDrawingBuffer if we have an external display to
-            // mirror to.
-            initWebGL(vrDisplay.capabilities.hasExternalDisplay);
-          } else {
-            initWebGL(false);
-            VRSamplesUtil.addInfo("WebVR supported, but no VRDisplays found.", 3000);
-          }
-        }, function () {
-          VRSamplesUtil.addError("Your browser does not support WebVR. See <a href='http://webvr.info'>webvr.info</a> for assistance.");
-        });
-      } else if (navigator.getVRDevices) {
-        initWebGL(false);
-        VRSamplesUtil.addError("Your browser supports WebVR but not the latest version. See <a href='http://webvr.info'>webvr.info</a> for more info.");
-      } else {
-        // No VR means no mirroring, so create WebGL content without
-        // preserveDrawingBuffer
-        initWebGL(false);
-        VRSamplesUtil.addError("Your browser does not support WebVR. See <a href='http://webvr.info'>webvr.info</a> for assistance.");
-      }
+  navigator.getVRDisplays().then(function (displays) {
+    if (displays.length > 0) {
+      vrDisplay = displays[displays.length - 1];
+      vrDisplay.depthNear = 0.1;
+      vrDisplay.depthFar = 1024.0;
 
-      function onResize () {
-        if (vrDisplay && vrDisplay.isPresenting) {
-          // If we're presenting we want to use the drawing buffer size
-          // recommended by the VRDevice, since that will ensure the best
-          // results post-distortion.
-          var leftEye = vrDisplay.getEyeParameters("left");
-          var rightEye = vrDisplay.getEyeParameters("right");
+      if (vrDisplay.capabilities.canPresent)
+        vrPresentButton = VRSamplesUtil.addButton("Enter VR", "E", "media/icons/cardboard64.png", onVRRequestPresent);
 
-          // For simplicity we're going to render both eyes at the same size,
-          // even if one eye needs less resolution. You can render each eye at
-          // the exact size it needs, but you'll need to adjust the viewports to
-          // account for that.
-          webglCanvas.width = Math.max(leftEye.renderWidth, rightEye.renderWidth) * 2;
-          webglCanvas.height = Math.max(leftEye.renderHeight, rightEye.renderHeight);
-        } else {
-          // We only want to change the size of the canvas drawing buffer to
-          // match the window dimensions when we're not presenting.
-          webglCanvas.width = webglCanvas.offsetWidth * window.devicePixelRatio;
-          webglCanvas.height = webglCanvas.offsetHeight * window.devicePixelRatio;
-        }
-      }
+      // For the benefit of automated testing. Safe to ignore.
+      if (vrDisplay.capabilities.canPresent && WGLUUrl.getBool('canvasClickPresents', false))
+        webglCanvas.addEventListener("click", onVRRequestPresent, false);
 
-      function onAnimationFrame (t) {
+      window.addEventListener('vrdisplaypresentchange', onVRPresentChange, false);
+      window.addEventListener('vrdisplayactivate', onVRRequestPresent, false);
+      window.addEventListener('vrdisplaydeactivate', onVRExitPresent, false);
 
-        let points_3d = gt.project(points,0.1);
-        // do not attempt to render if there is no available WebGL context
-        if (!gl || !stats || !pointCloud) {
-          return;
-        }
+      // Only use preserveDrawingBuffer if we have an external display to
+      // mirror to.
+      initWebGL(vrDisplay.capabilities.hasExternalDisplay);
+    } else {
+      initWebGL(false);
+      VRSamplesUtil.addInfo("WebVR supported, but no VRDisplays found.", 3000);
+    }
+  }, function () {
+    VRSamplesUtil.addError("Your browser does not support WebVR. See <a href='http://webvr.info'>webvr.info</a> for assistance.");
+  });
+} else if (navigator.getVRDevices) {
+  initWebGL(false);
+  VRSamplesUtil.addError("Your browser supports WebVR but not the latest version. See <a href='http://webvr.info'>webvr.info</a> for more info.");
+} else {
+  // No VR means no mirroring, so create WebGL content without
+  // preserveDrawingBuffer
+  initWebGL(false);
+  VRSamplesUtil.addError("Your browser does not support WebVR. See <a href='http://webvr.info'>webvr.info</a> for assistance.");
+}
 
-        stats.begin();
+function onResize () {
+  if (vrDisplay && vrDisplay.isPresenting) {
+    // If we're presenting we want to use the drawing buffer size
+    // recommended by the VRDevice, since that will ensure the best
+    // results post-distortion.
+    var leftEye = vrDisplay.getEyeParameters("left");
+    var rightEye = vrDisplay.getEyeParameters("right");
 
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    // For simplicity we're going to render both eyes at the same size,
+    // even if one eye needs less resolution. You can render each eye at
+    // the exact size it needs, but you'll need to adjust the viewports to
+    // account for that.
+    webglCanvas.width = Math.max(leftEye.renderWidth, rightEye.renderWidth) * 2;
+    webglCanvas.height = Math.max(leftEye.renderHeight, rightEye.renderHeight);
+  } else {
+    // We only want to change the size of the canvas drawing buffer to
+    // match the window dimensions when we're not presenting.
+    webglCanvas.width = webglCanvas.offsetWidth * window.devicePixelRatio;
+    webglCanvas.height = webglCanvas.offsetHeight * window.devicePixelRatio;
+  }
+}
 
-        if (vrDisplay) {
-          vrDisplay.requestAnimationFrame(onAnimationFrame);
+function onAnimationFrame (t) {
 
-          vrDisplay.getFrameData(frameData);
+  let points_3d = gt.project(points,0.1);
+  
+  // do not attempt to render if there is no available WebGL context
+  if (!gl || !stats || !pointCloud) {
+    return;
+  }
 
-          if (vrDisplay.isPresenting) {
-            gl.viewport(0, 0, webglCanvas.width * 0.5, webglCanvas.height);
+  stats.begin();
 
-           
-            pointCloud.render(points_3d, colors, frameData.leftProjectionMatrix, frameData.leftViewMatrix, stats, t);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-            gl.viewport(webglCanvas.width * 0.5, 0, webglCanvas.width * 0.5, webglCanvas.height);
-            pointCloud.render(points_3d, colors, frameData.rightProjectionMatrix, frameData.rightViewMatrix, stats, t);
+  if (vrDisplay) {
+    vrDisplay.requestAnimationFrame(onAnimationFrame);
 
-            vrDisplay.submitFrame();
-          } else {
-            gl.viewport(0, 0, webglCanvas.width, webglCanvas.height);
-            mat4.perspective(projectionMat, Math.PI*0.4, webglCanvas.width / webglCanvas.height, 0.1, 1024.0);
-            pointCloud.render(points_3d, colors, projectionMat, frameData.leftViewMatrix, stats, t);
-            stats.renderOrtho();
-          }
-        } else {
-          window.requestAnimationFrame(onAnimationFrame);
+    vrDisplay.getFrameData(frameData);
 
-          // No VRDisplay found.
-          gl.viewport(0, 0, webglCanvas.width, webglCanvas.height);
-          mat4.perspective(projectionMat, Math.PI*0.4, webglCanvas.width / webglCanvas.height, 0.1, 1024.0);
-          mat4.identity(viewMat);
-          pointCloud.render(projectionMat, viewMat, stats, t);
+    if (vrDisplay.isPresenting) {
+      gl.viewport(0, 0, webglCanvas.width * 0.5, webglCanvas.height);
 
-          stats.renderOrtho();
-        }
+     
+      pointCloud.render(points_3d, colors, frameData.leftProjectionMatrix, frameData.leftViewMatrix, stats, t);
 
-        stats.end();
-      }
+      gl.viewport(webglCanvas.width * 0.5, 0, webglCanvas.width * 0.5, webglCanvas.height);
+      pointCloud.render(points_3d, colors, frameData.rightProjectionMatrix, frameData.rightViewMatrix, stats, t);
 
-    </script>
-  </body>
+      vrDisplay.submitFrame();
+    } else {
+      gl.viewport(0, 0, webglCanvas.width, webglCanvas.height);
+      mat4.perspective(projectionMat, Math.PI*0.4, webglCanvas.width / webglCanvas.height, 0.1, 1024.0);
+      pointCloud.render(points_3d, colors, projectionMat, frameData.leftViewMatrix, stats, t);
+      stats.renderOrtho();
+    }
+  } else {
+    window.requestAnimationFrame(onAnimationFrame);
+
+    // No VRDisplay found.
+    gl.viewport(0, 0, webglCanvas.width, webglCanvas.height);
+    mat4.perspective(projectionMat, Math.PI*0.4, webglCanvas.width / webglCanvas.height, 0.1, 1024.0);
+    mat4.identity(viewMat);
+    pointCloud.render(projectionMat, viewMat, stats, t);
+
+    stats.renderOrtho();
+  }
+
+  stats.end();
+}
+
+</script>
+</body>
 </html>
